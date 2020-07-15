@@ -1,1 +1,1 @@
-**repo for start golang**
+**repo for study golang**
