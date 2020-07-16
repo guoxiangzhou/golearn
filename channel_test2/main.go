@@ -17,7 +17,7 @@ func main() {
 	}(ch)
 
 	go func(ch chan<- string) {
-		ch <- "hello"qqq
+		ch <- "hello"
 		time.Sleep(1e9)
 		ch <- "world"
 		time.Sleep(1e9)
