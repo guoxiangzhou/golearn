@@ -8,11 +8,15 @@ import (
 func main() {
 	ch := make(chan string)
 	go func(ch <-chan string) {
-		v, ok := <-ch
-		for ok {
+		for v := range ch {
 			fmt.Println(v)
-			v, ok = <-ch
 		}
+
+		//v,ok := <-ch
+		//for ok {
+		//	fmt.Println(v)
+		//	v, ok = <-ch
+		//}
 		fmt.Println("exit receiver")
 	}(ch)
 
