@@ -19,7 +19,7 @@ func main() {
 		case v := <-c1:
 			fmt.Printf("idx = %d, value = %s\n", i, v)
 		case v := <-c2:
-			fmt.Printf("idx = %d, value = %s", i, v)
+			fmt.Printf("idx = %d, value = %s\n", i, v)
 		}
 	}
 }
