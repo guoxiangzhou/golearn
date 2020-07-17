@@ -9,6 +9,7 @@ func main() {
 	c := make(chan int, 100)
 	go func(c <-chan int) {
 		time.Sleep(5e9)
+		fmt.Println("start receive from channel")
 		for v := range c {
 			fmt.Println(v)
 		}
