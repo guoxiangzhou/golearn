@@ -27,6 +27,18 @@ func (d *derived3) NewPrint() {
 	fmt.Println("from derived3")
 }
 
+type derived4 struct {
+	derived2
+}
+
+type derived5 struct {
+	derived2
+}
+
+func (d *derived5) Print() {
+	fmt.Println("from derived5")
+}
+
 func PrintTest(p base) {
 	p.Print()
 }
@@ -37,6 +49,8 @@ func main() {
 	PrintTest(d1)
 	PrintTest(d2)
 	//PrintTest(&derived3{})
+	PrintTest(&derived4{})
+	PrintTest(&derived5{})
 
 	var p base
 	p = &derived1{}
@@ -44,4 +58,8 @@ func main() {
 	p = &derived2{}
 	p.Print()
 	//p = &derived3{}
+	p = &derived4{}
+	p.Print()
+	p = &derived5{}
+	p.Print()
 }
