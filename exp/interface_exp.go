@@ -20,6 +20,13 @@ func (d *derived2) Print() {
 	fmt.Println("from derived2")
 }
 
+type derived3 struct {
+}
+
+func (d *derived3) NewPrint() {
+	fmt.Println("from derived3")
+}
+
 func PrintTest(p base) {
 	p.Print()
 }
@@ -29,10 +36,12 @@ func main() {
 	d2 := &derived2{}
 	PrintTest(d1)
 	PrintTest(d2)
+	//PrintTest(&derived3{})
 
 	var p base
 	p = &derived1{}
 	p.Print()
 	p = &derived2{}
 	p.Print()
+	//p = &derived3{}
 }
