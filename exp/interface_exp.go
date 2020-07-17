@@ -2,31 +2,31 @@ package main
 
 import "fmt"
 
-type Base interface {
+type base interface {
 	Print()
 }
 
-type Derived1 struct {
+type derived1 struct {
 }
 
-func (d *Derived1) Print() {
+func (d *derived1) Print() {
 	fmt.Println("from derived1")
 }
 
-type Derived2 struct {
+type derived2 struct {
 }
 
-func (d *Derived2) Print() {
+func (d *derived2) Print() {
 	fmt.Println("from derived2")
 }
 
-func PrintTest(p Base) {
+func PrintTest(p base) {
 	p.Print()
 }
 
 func main() {
-	d1 := &Derived1{}
-	d2 := &Derived2{}
+	d1 := &derived1{}
+	d2 := &derived2{}
 	PrintTest(d1)
 	PrintTest(d2)
 }
