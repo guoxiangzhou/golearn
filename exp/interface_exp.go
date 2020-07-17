@@ -29,4 +29,10 @@ func main() {
 	d2 := &derived2{}
 	PrintTest(d1)
 	PrintTest(d2)
+
+	var p base
+	p = &derived1{}
+	p.Print()
+	p = &derived2{}
+	p.Print()
 }
