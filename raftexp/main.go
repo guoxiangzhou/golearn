@@ -338,12 +338,15 @@ func waitCommitConverge(ns []*node, target uint64) bool {
 }
 
 func main() {
-	peers := []raft.Peer{{ID: 1, Context: nil}, {ID: 2, Context: nil}, {ID: 3, Context: nil}, {ID: 4, Context: nil}, {ID: 5, Context: nil}}
-	nt := newRaftNetwork(1, 2, 3, 4, 5)
+	//peers := []raft.Peer{{ID: 1, Context: nil}, {ID: 2, Context: nil}, {ID: 3, Context: nil}, {ID: 4, Context: nil}, {ID: 5, Context: nil}}
+	//nt := newRaftNetwork(1, 2, 3, 4, 5)
+	peers := []raft.Peer{{ID: 1, Context: nil}}
+	nt := newRaftNetwork(1)
 
 	nodes := make([]*node, 0)
 
-	for i := 1; i <= 5; i++ {
+	//for i := 1; i <= 5; i++ {
+	for i := 1; i <= 1; i++ {
 		n := startNode(uint64(i), peers, nt.nodeNetwork(uint64(i)))
 		nodes = append(nodes, n)
 	}
