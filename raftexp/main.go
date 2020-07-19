@@ -147,13 +147,13 @@ func (nt *nodeNetwork) disconnect() {
 }
 
 func (nt *nodeNetwork) send(m raftpb.Message) {
-	log.Printf("send, id = %d, msg = %v\n", nt.id, m)
+	//log.Printf("send, id = %d, msg = %v\n", nt.id, m)
 	nt.raftNetwork.send(m)
 }
 
 func (nt *nodeNetwork) recv() chan raftpb.Message {
 	msg := nt.recvFrom(nt.id)
-	log.Printf("recv, id = %d, msg = %v\n", nt.id, msg)
+	//log.Printf("recv, id = %d, msg = %v\n", nt.id, msg)
 	return msg
 }
 
