@@ -153,7 +153,6 @@ func (nt *nodeNetwork) send(m raftpb.Message) {
 
 func (nt *nodeNetwork) recv() chan raftpb.Message {
 	msg := nt.recvFrom(nt.id)
-	//log.Printf("recv, id = %d, msg = %v\n", nt.id, msg)
 	return msg
 }
 
