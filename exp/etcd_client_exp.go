@@ -15,7 +15,7 @@ import (
 func main() {
 	clientv3.SetLogger(grpclog.NewLoggerV2(os.Stderr, os.Stderr, os.Stderr))
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"172.20.0.101:2379", "172.20.0.102:2379", "172.20.0.103:2379"},
+		Endpoints:   []string{"127.0.0.1:10001", "127.0.0.1:10002", "127.0.0.1:10003"},
 		DialTimeout: 1 * time.Second,
 	})
 	if err != nil {
