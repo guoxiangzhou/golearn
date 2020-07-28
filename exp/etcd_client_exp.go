@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"go.etcd.io/etcd/clientv3"
+	gcode "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	gs "google.golang.org/grpc/status"
 	"log"
 	"os"
 	"time"
@@ -39,9 +41,13 @@ func main() {
 		_, err = cli.Put(context.TODO(), key, value)
 		fmt.Print(".")
 		for err != nil {
-			log.Printf("index=%d, error = %v\n", i, err)
+			grpcErr, _ := gs.FromError(err)
+			if grpcErr.Code() == gcode.InvalidArgument {
+				log.Fatalf("falt error, index = %d, error = %v\n", i, err)
+			}
+			log.Printf("==================================\n")
+			log.Printf("grpc error, code = %v \n", grpcErr.Code())
 			_, err = cli.Put(context.TODO(), key, value)
-			log.Printf("retry, error = %v\n", err)
 			fmt.Print(".")
 		}
 	}
