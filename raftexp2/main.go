@@ -39,6 +39,29 @@ func buildNode(id uint64, peers []raft.Peer) *node {
 	return n
 }
 
+func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
+	for _, m := range msgs {
+		m := m
+		for _, recvNode := range nodes {
+			if recvNode.id != src.id {
+				recvNode := recvNode
+				go func() {
+					b, err := m.Marshal()
+					if err != nil {
+						panic(err)
+					}
+					var cm raftpb.Message
+					err = cm.Unmarshal(b)
+					if err != nil {
+						panic(err)
+					}
+					recvNode.mbox <- cm
+				}()
+			}
+		}
+	}
+}
+
 func startNodes(nodes []*node) {
 	for _, n := range nodes {
 		n.mbox = make(chan raftpb.Message, len(nodes))
@@ -60,27 +83,7 @@ func startNodes(nodes []*node) {
 						n.storage.SetHardState(n.state)
 					}
 					n.storage.Append(rd.Entries)
-					for _, m := range rd.Messages {
-						m := m
-						for _, recvNode := range nodes {
-							if recvNode.id != n.id {
-								recvNode := recvNode
-								go func() {
-									b, err := m.Marshal()
-									if err != nil {
-										panic(err)
-									}
-									var cm raftpb.Message
-									err = cm.Unmarshal(b)
-									if err != nil {
-										panic(err)
-									}
-									//time.Sleep(time.Duration(rand.Int63n(10)) * time.Millisecond)
-									recvNode.mbox <- cm
-								}()
-							}
-						}
-					}
+					sendMessages(n, nodes, rd.Messages)
 					n.Advance()
 				case m := <-n.mbox:
 					n.Step(context.TODO(), m)
