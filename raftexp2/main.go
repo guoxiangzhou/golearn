@@ -12,7 +12,6 @@ import (
 
 type node struct {
 	raft.Node
-	id      uint64
 	storage *raft.MemoryStorage
 
 	mu    sync.Mutex
@@ -34,7 +33,6 @@ func buildNode(id uint64, peers []raft.Peer) *node {
 	rn := raft.StartNode(c, peers)
 	n := &node{
 		Node:    rn,
-		id:      id,
 		storage: st,
 	}
 	return n
@@ -44,7 +42,7 @@ func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
 	for _, m := range msgs {
 		m := m
 		for _, recvNode := range nodes {
-			if recvNode.id != src.id {
+			if recvNode.Status().ID != src.Status().ID {
 				recvNode := recvNode
 				go func() {
 					b, err := m.Marshal()
@@ -104,7 +102,6 @@ func startNodes(nodes []*node) {
 						n.storage.SetHardState(n.state)
 					}
 					n.storage.Append(rd.Entries)
-					time.Sleep(time.Millisecond)
 					sendMessages(n, nodes, rd.Messages)
 					applyCommits(n, rd.CommittedEntries)
 					n.Advance()
@@ -132,7 +129,7 @@ func main() {
 	for {
 		time.Sleep(time.Second)
 		for _, n := range nodes {
-			fmt.Printf("node id = %d, node state = %v\n", n.id, n.Status())
+			fmt.Printf("node id = %d, node state = %v\n",n.Status().ID, n.Status())
 		}
 	}
 
