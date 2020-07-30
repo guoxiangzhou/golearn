@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"go.etcd.io/etcd/raft"
 	"go.etcd.io/etcd/raft/raftpb"
 	"math/rand"
@@ -105,7 +106,9 @@ func main() {
 	startNodes(nodes)
 	for {
 		time.Sleep(time.Second)
-		//fmt.Print(".")
+		for _, n := range nodes {
+			fmt.Printf("node id = %d, node state = %v\n", n.id, n.Status())
+		}
 	}
 
 }
