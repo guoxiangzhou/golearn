@@ -19,7 +19,6 @@ type node struct {
 	state raftpb.HardState
 
 	mbox         chan raftpb.Message
-	appliedIndex uint64
 }
 
 func buildNode(id uint64, peers []raft.Peer) *node {
@@ -69,18 +68,17 @@ func applyCommits(n *node, entries []raftpb.Entry) {
 		return
 	}
 	firstIdx := entries[0].Index
-	if firstIdx > n.appliedIndex+1 {
-		log.Fatalf("first index %d should <= (appliedIndex %d) + 1\n", firstIdx, n.appliedIndex)
+	if firstIdx > n.Status().Applied+1 {
+		log.Fatalf("first index %d should <= (appliedIndex %d) + 1\n", firstIdx, n.Status().Applied)
 	}
-	if n.appliedIndex-firstIdx+1 < uint64(len(entries)) {
-		entries := entries[n.appliedIndex-firstIdx+1:]
+	if n.Status().Applied-firstIdx+1 < uint64(len(entries)) {
+		entries := entries[n.Status().Applied-firstIdx+1:]
 		for _, entry := range entries {
 			if entry.Type == raftpb.EntryConfChange {
 				var cc raftpb.ConfChange
 				cc.Unmarshal(entry.Data)
 				n.ApplyConfChange(cc)
 			}
-			n.appliedIndex = entry.Index
 		}
 	}
 }
