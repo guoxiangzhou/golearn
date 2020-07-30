@@ -84,6 +84,14 @@ func startNodes(nodes []*node) {
 					}
 					n.storage.Append(rd.Entries)
 					sendMessages(n, nodes, rd.Messages)
+					for _, entry := range rd.CommittedEntries {
+						if entry.Type == raftpb.EntryConfChange {
+							var cc raftpb.ConfChange
+							cc.Unmarshal(entry.Data)
+							n.ApplyConfChange(cc)
+						}
+					}
+
 					n.Advance()
 				case m := <-n.mbox:
 					n.Step(context.TODO(), m)
