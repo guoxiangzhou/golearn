@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"go.etcd.io/etcd/raft"
@@ -17,7 +18,7 @@ type node struct {
 	mu    sync.Mutex
 	state raftpb.HardState
 
-	mbox         chan raftpb.Message
+	mbox chan raftpb.Message
 }
 
 func buildNode(id uint64, peers []raft.Peer) *node {
@@ -39,6 +40,16 @@ func buildNode(id uint64, peers []raft.Peer) *node {
 }
 
 func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
+	if len(msgs) == 0 {
+		return
+	}
+
+	var buffer bytes.Buffer
+	for _, m := range msgs {
+		buffer.WriteString(fmt.Sprintf("type = %v;", m.Type))
+	}
+	log.Printf("src:%d, msg : %s\n", src.Status().ID, buffer.String())
+
 	for _, m := range msgs {
 		m := m
 		for _, recvNode := range nodes {
@@ -129,7 +140,7 @@ func main() {
 	for {
 		time.Sleep(time.Second)
 		for _, n := range nodes {
-			fmt.Printf("node id = %d, node state = %v\n",n.Status().ID, n.Status())
+			fmt.Printf("node id = %d, node state = %v\n", n.Status().ID, n.Status())
 		}
 	}
 
