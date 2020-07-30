@@ -46,29 +46,24 @@ func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
 
 	var buffer bytes.Buffer
 	for _, m := range msgs {
-		buffer.WriteString(fmt.Sprintf("type = %v;", m.Type))
+		buffer.WriteString(fmt.Sprintf(" %v %d->%d;", m.Type, m.From, m.To))
 	}
 	log.Printf("src:%d, msg : %s\n", src.Status().ID, buffer.String())
 
 	for _, m := range msgs {
-		m := m
-		for _, recvNode := range nodes {
-			if recvNode.Status().ID != src.Status().ID {
-				recvNode := recvNode
-				go func() {
-					b, err := m.Marshal()
-					if err != nil {
-						log.Fatal(err)
-					}
-					var cm raftpb.Message
-					err = cm.Unmarshal(b)
-					if err != nil {
-						log.Fatal(err)
-					}
-					recvNode.mbox <- cm
-				}()
-			}
+		b, err := m.Marshal()
+		if err != nil {
+			log.Fatal(err)
 		}
+		var cm raftpb.Message
+		err = cm.Unmarshal(b)
+		if err != nil {
+			log.Fatal(err)
+		}
+		toIndx := m.To - 1
+		go func() {
+			nodes[toIndx].mbox <- cm
+		}()
 	}
 }
 
