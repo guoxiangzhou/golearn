@@ -62,6 +62,16 @@ func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
 	}
 }
 
+func applyCommits(n *node, entries []raftpb.Entry) {
+	for _, entry := range entries {
+		if entry.Type == raftpb.EntryConfChange {
+			var cc raftpb.ConfChange
+			cc.Unmarshal(entry.Data)
+			n.ApplyConfChange(cc)
+		}
+	}
+}
+
 func startNodes(nodes []*node) {
 	for _, n := range nodes {
 		n.mbox = make(chan raftpb.Message, len(nodes))
@@ -84,14 +94,7 @@ func startNodes(nodes []*node) {
 					}
 					n.storage.Append(rd.Entries)
 					sendMessages(n, nodes, rd.Messages)
-					for _, entry := range rd.CommittedEntries {
-						if entry.Type == raftpb.EntryConfChange {
-							var cc raftpb.ConfChange
-							cc.Unmarshal(entry.Data)
-							n.ApplyConfChange(cc)
-						}
-					}
-
+					applyCommits(n, rd.CommittedEntries)
 					n.Advance()
 				case m := <-n.mbox:
 					n.Step(context.TODO(), m)
