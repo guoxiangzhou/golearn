@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.etcd.io/etcd/raft"
 	"go.etcd.io/etcd/raft/raftpb"
+	"log"
 	"sync"
 	"time"
 )
@@ -17,7 +18,8 @@ type node struct {
 	mu    sync.Mutex
 	state raftpb.HardState
 
-	mbox chan raftpb.Message
+	mbox         chan raftpb.Message
+	appliedIndex uint64
 }
 
 func buildNode(id uint64, peers []raft.Peer) *node {
@@ -48,12 +50,12 @@ func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
 				go func() {
 					b, err := m.Marshal()
 					if err != nil {
-						panic(err)
+						log.Fatal(err)
 					}
 					var cm raftpb.Message
 					err = cm.Unmarshal(b)
 					if err != nil {
-						panic(err)
+						log.Fatal(err)
 					}
 					recvNode.mbox <- cm
 				}()
@@ -63,11 +65,22 @@ func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
 }
 
 func applyCommits(n *node, entries []raftpb.Entry) {
-	for _, entry := range entries {
-		if entry.Type == raftpb.EntryConfChange {
-			var cc raftpb.ConfChange
-			cc.Unmarshal(entry.Data)
-			n.ApplyConfChange(cc)
+	if len(entries) == 0 {
+		return
+	}
+	firstIdx := entries[0].Index
+	if firstIdx > n.appliedIndex+1 {
+		log.Fatalf("first index %d should <= (appliedIndex %d) + 1\n", firstIdx, n.appliedIndex)
+	}
+	if n.appliedIndex-firstIdx+1 < uint64(len(entries)) {
+		entries := entries[n.appliedIndex-firstIdx+1:]
+		for _, entry := range entries {
+			if entry.Type == raftpb.EntryConfChange {
+				var cc raftpb.ConfChange
+				cc.Unmarshal(entry.Data)
+				n.ApplyConfChange(cc)
+			}
+			n.appliedIndex = entry.Index
 		}
 	}
 }
