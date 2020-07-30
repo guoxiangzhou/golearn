@@ -60,9 +60,9 @@ func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		toIndx := m.To - 1
+		toIdx := m.To - 1
 		go func() {
-			nodes[toIndx].mbox <- cm
+			nodes[toIdx].mbox <- cm
 		}()
 	}
 }
