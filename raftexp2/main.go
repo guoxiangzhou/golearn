@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go.etcd.io/etcd/raft"
 	"go.etcd.io/etcd/raft/raftpb"
-	"math/rand"
 	"sync"
 	"time"
 )
@@ -76,7 +75,7 @@ func startNodes(nodes []*node) {
 									if err != nil {
 										panic(err)
 									}
-									time.Sleep(time.Duration(rand.Int63n(10)) * time.Millisecond)
+									//time.Sleep(time.Duration(rand.Int63n(10)) * time.Millisecond)
 									recvNode.mbox <- cm
 								}()
 							}
