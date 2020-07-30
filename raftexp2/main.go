@@ -106,6 +106,7 @@ func startNodes(nodes []*node) {
 						n.storage.SetHardState(n.state)
 					}
 					n.storage.Append(rd.Entries)
+					time.Sleep(time.Millisecond)
 					sendMessages(n, nodes, rd.Messages)
 					applyCommits(n, rd.CommittedEntries)
 					n.Advance()
