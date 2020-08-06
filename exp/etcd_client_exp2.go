@@ -38,7 +38,7 @@ func getOp(numClient int, numQuery int, endpoints []string) {
 		cli := clients[i]
 		go func() {
 			//log.Printf("start client %d\n", i)
-			for i := 0; i < numQuery; i++ {
+			for j := 0; j < numQuery; j++ {
 				key := fmt.Sprintf("key%d", rand.Int()%1000000)
 				if _, err := cli.Get(context.TODO(), key); err != nil {
 					log.Fatal(err)
