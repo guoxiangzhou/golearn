@@ -82,7 +82,7 @@ func putOp(numClient int, numQuery int, keyPrefix int, valPrefix int, endpoints 
 		preKey += "0"
 	}
 	preVal := ""
-	for i := 0; i < keyPrefix; i++ {
+	for i := 0; i < valPrefix; i++ {
 		preVal += "0"
 	}
 
