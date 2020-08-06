@@ -34,7 +34,6 @@ func getOp(numClient int, numQuery int, keyPrefix int, endpoints []string) {
 	for i := 0; i < numClient; i++ {
 		cli, err := clientv3.New(clientv3.Config{
 			Endpoints:   endpoints,
-			DialTimeout: 1 * time.Second,
 		})
 		if err != nil {
 			log.Fatal(err)
@@ -89,7 +88,6 @@ func putOp(numClient int, numQuery int, keyPrefix int, valPrefix int, endpoints 
 	for i := 0; i < numClient; i++ {
 		cli, err := clientv3.New(clientv3.Config{
 			Endpoints:   endpoints,
-			DialTimeout: 1 * time.Second,
 		})
 		if err != nil {
 			log.Fatal(err)
