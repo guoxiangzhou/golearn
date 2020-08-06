@@ -37,6 +37,7 @@ func getOp(numClient int, numQuery int, endpoints []string) {
 		i := i
 		cli := clients[i]
 		go func() {
+			//log.Printf("start client %d\n", i)
 			for i := 0; i < numQuery; i++ {
 				key := fmt.Sprintf("key%d", rand.Int()%1000000)
 				if _, err := cli.Get(context.TODO(), key); err != nil {
@@ -46,7 +47,6 @@ func getOp(numClient int, numQuery int, endpoints []string) {
 			ch <- 0
 			//log.Printf("finish client %d\n", i)
 		}()
-		//log.Printf("start client %d\n", i)
 	}
 	for i := 0; i < numClient; i++ {
 		<-ch
