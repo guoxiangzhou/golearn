@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"go.etcd.io/etcd/raft"
@@ -44,11 +43,11 @@ func sendMessages(src *node, nodes []*node, msgs []raftpb.Message) {
 		return
 	}
 
-	var buffer bytes.Buffer
-	for _, m := range msgs {
-		buffer.WriteString(fmt.Sprintf(" %v %d->%d;", m.Type, m.From, m.To))
-	}
-	log.Printf("src:%d, msg : %s\n", src.Status().ID, buffer.String())
+	//var buffer bytes.Buffer
+	//for _, m := range msgs {
+	//	buffer.WriteString(fmt.Sprintf(" %v %d->%d;", m.Type, m.From, m.To))
+	//}
+	//log.Printf("src:%d, msg : %s\n", src.Status().ID, buffer.String())
 
 	for _, m := range msgs {
 		b, err := m.Marshal()
@@ -82,6 +81,24 @@ func applyCommits(n *node, entries []raftpb.Entry) {
 				var cc raftpb.ConfChange
 				cc.Unmarshal(entry.Data)
 				n.ApplyConfChange(cc)
+			} else if entry.Type == raftpb.EntryNormal && n.Status().ID == 1 {
+				if len(entry.Data) != 0 {
+					msg := string(entry.Data)
+					log.Printf("apply %d msg : %s", n.Status().ID, msg)
+				}
+			}
+		}
+	}
+}
+
+func proposeEntries(n *node, entries []raftpb.Entry) {
+	if n.Status().ID == 1 {
+		for _, e := range entries {
+			if e.Type == raftpb.EntryNormal {
+				if len(e.Data) != 0 {
+					msg := string(e.Data)
+					log.Printf("propose %d msg : %s", n.Status().ID, msg)
+				}
 			}
 		}
 	}
@@ -95,18 +112,22 @@ func startNodes(nodes []*node) {
 	for _, n := range nodes {
 		n := n
 		go func() {
-			ticker := time.Tick(5 * time.Millisecond)
+			ticker := time.Tick(time.Second)
 			for {
 				select {
 				case <-ticker:
 					n.Tick()
 				case rd := <-n.Ready():
+					if n.Status().ID==1{
+						log.Println("==== node ready ===========")
+					}
 					if !raft.IsEmptyHardState(rd.HardState) {
 						n.mu.Lock()
 						n.state = rd.HardState
 						n.mu.Unlock()
 						n.storage.SetHardState(n.state)
 					}
+					proposeEntries(n, rd.Entries)
 					n.storage.Append(rd.Entries)
 					sendMessages(n, nodes, rd.Messages)
 					applyCommits(n, rd.CommittedEntries)
@@ -132,11 +153,15 @@ func main() {
 		nodes[i] = buildNode(peer.ID, peers)
 	}
 	startNodes(nodes)
+	cnt := 0
 	for {
 		time.Sleep(time.Second)
-		for _, n := range nodes {
-			fmt.Printf("node id = %d, node state = %v\n", n.Status().ID, n.Status())
-		}
+		msg := fmt.Sprintf("node %d, msg %d", nodes[0].Status().ID, cnt)
+		cnt++
+		nodes[0].Propose(context.TODO(), []byte(msg))
+		//for _, n := range nodes {
+		//	fmt.Printf("node id = %d, node state = %v\n", n.Status().ID, n.Status())
+		//}
 	}
 
 }
