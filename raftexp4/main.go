@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"go.etcd.io/etcd/raft"
+	"go.etcd.io/etcd/raft/raftpb"
+	"log"
 	"time"
 )
 
@@ -28,6 +32,12 @@ func main() {
 					storage.SetHardState(rd.HardState)
 				}
 				storage.Append(rd.Entries)
+				for _, ent := range rd.CommittedEntries {
+					if ent.Type == raftpb.EntryNormal && len(ent.Data) > 0 {
+						msg := string(ent.Data)
+						log.Printf("commit msg : %s\n", msg)
+					}
+				}
 				raftNode.Advance()
 			case <-stopCh:
 				raftNode.Stop()
@@ -37,6 +47,8 @@ func main() {
 	for i := 0; i < 10; i++ {
 		if i == 9 {
 			stopCh <- struct{}{}
+		} else {
+			raftNode.Propose(context.TODO(), []byte(fmt.Sprintf("value %d", i)))
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
