@@ -153,6 +153,78 @@ func createNode(id uint64) *node {
 	return n
 }
 
+func loadWal() (state raftpb.HardState, entries []raftpb.Entry) {
+	db, err := sql.Open("sqlite3", walPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	stRows, err := db.Query("SELECT data FROM wal WHERE idx=0")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stRows.Close()
+	for stRows.Next() {
+		var stBytes []byte
+		err := stRows.Scan(&stBytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pbutil.MustUnmarshal(&state, stBytes)
+	}
+	walRows, err := db.Query("SELECT idx, data FROM wal WHERE idx >0 ORDER BY idx ASC")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer walRows.Close()
+	for walRows.Next() {
+		var idx uint64
+		var walBytes []byte
+		err := walRows.Scan(&idx, &walBytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var entry raftpb.Entry
+		pbutil.MustUnmarshal(&entry, walBytes)
+		entries = append(entries, entry)
+	}
+	return state, entries
+}
+
+func restart() {
+	st := raft.NewMemoryStorage()
+	c := &raft.Config{
+		ID:              0x01,
+		ElectionTick:    10,
+		HeartbeatTick:   1,
+		Storage:         st,
+		MaxSizePerMsg:   4096,
+		MaxInflightMsgs: 256,
+	}
+	stat, ents := loadWal()
+	st.SetHardState(stat)
+	st.Append(ents)
+	rn := raft.RestartNode(c)
+
+	n := &node{
+		Node:    rn,
+		storage: st,
+		kvstore: make(map[string]string),
+	}
+
+	stopc := make(chan struct{})
+
+	go n.startServer(stopc)
+
+	time.Sleep(time.Second)
+	stopc <- struct{}{}
+	time.Sleep(time.Second)
+	for key, value := range n.kvstore {
+		log.Printf("%s,%s", key, value)
+	}
+}
+
 func main() {
 	n := createNode(0x01)
 	if _, err := os.Stat(walPath); err == nil {
@@ -178,5 +250,5 @@ func main() {
 		log.Printf("%s,%s", key, value)
 	}
 	log.Println("============== restart ======================")
-
+	restart()
 }
