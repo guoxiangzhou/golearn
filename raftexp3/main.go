@@ -101,7 +101,28 @@ func (n *node) saveWal(st raftpb.HardState, ents []raftpb.Entry) {
 		}
 		stmt.Close()
 	}
+}
 
+func (n *node) startServer(stopc chan struct{}) {
+	ticker := time.Tick(10 * time.Millisecond)
+	for {
+		select {
+		case <-ticker:
+			n.Tick()
+		case rd := <-n.Ready():
+			n.saveWal(rd.HardState, rd.Entries)
+
+			if !raft.IsEmptyHardState(rd.HardState) {
+				n.storage.SetHardState(rd.HardState)
+			}
+			n.storage.Append(rd.Entries)
+			n.applyCommits(rd.CommittedEntries)
+			n.Advance()
+		case <-stopc:
+			n.Stop()
+			return
+		}
+	}
 }
 
 func main() {
@@ -137,27 +158,7 @@ func main() {
 
 	stopc := make(chan struct{})
 
-	go func() {
-		ticker := time.Tick(10 * time.Millisecond)
-		for {
-			select {
-			case <-ticker:
-				n.Tick()
-			case rd := <-n.Ready():
-				n.saveWal(rd.HardState, rd.Entries)
-
-				if !raft.IsEmptyHardState(rd.HardState) {
-					n.storage.SetHardState(rd.HardState)
-				}
-				n.storage.Append(rd.Entries)
-				n.applyCommits(rd.CommittedEntries)
-				n.Advance()
-			case <-stopc:
-				n.Stop()
-				return
-			}
-		}
-	}()
+	go n.startServer(stopc)
 	for i := 0; i < 10; i++ {
 		n.propose(fmt.Sprintf("Key%d", i), fmt.Sprintf("Value%d", i))
 		if i == 9 {
@@ -168,4 +169,6 @@ func main() {
 	for key, value := range n.kvstore {
 		log.Printf("%s,%s", key, value)
 	}
+	log.Println("============== restart ======================")
+
 }
