@@ -125,10 +125,10 @@ func (n *node) startServer(stopc chan struct{}) {
 	}
 }
 
-func main() {
+func createNode(id uint64) *node {
 	st := raft.NewMemoryStorage()
 	c := &raft.Config{
-		ID:              0x01,
+		ID:              id,
 		ElectionTick:    10,
 		HeartbeatTick:   1,
 		Storage:         st,
@@ -142,7 +142,11 @@ func main() {
 		storage: st,
 		kvstore: make(map[string]string),
 	}
+	return n
+}
 
+func main() {
+	n := createNode(0x01)
 	if _, err := os.Stat(walPath); err == nil {
 		os.Remove(walPath)
 	}
