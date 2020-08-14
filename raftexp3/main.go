@@ -2,17 +2,12 @@ package main
 
 import (
 	"go.etcd.io/etcd/raft"
-	"go.etcd.io/etcd/raft/raftpb"
-	"sync"
 	"time"
 )
 
 type node struct {
 	raft.Node
 	storage *raft.MemoryStorage
-
-	mu    sync.Mutex
-	state raftpb.HardState
 }
 
 func main() {
@@ -42,10 +37,7 @@ func main() {
 				n.Tick()
 			case rd := <-n.Ready():
 				if !raft.IsEmptyHardState(rd.HardState) {
-					n.mu.Lock()
-					n.state = rd.HardState
-					n.mu.Unlock()
-					n.storage.SetHardState(n.state)
+					n.storage.SetHardState(rd.HardState)
 				}
 				n.storage.Append(rd.Entries)
 				n.Advance()
