@@ -19,7 +19,7 @@ func main() {
 		MaxSizePerMsg:   4096,
 		MaxInflightMsgs: 256,
 	}
-	raftNode := raft.StartNode(config, []raft.Peer{{ID: 0x01}})
+	raftNode := raft.StartNode(config, []raft.Peer{{ID: 0x01}, {ID: 0x02}})
 	stopCh := make(chan struct{})
 	go func() {
 		ticker := time.Tick(10 * time.Millisecond)
@@ -48,7 +48,10 @@ func main() {
 		if i == 9 {
 			stopCh <- struct{}{}
 		} else {
+			log.Printf("=============================================================")
 			raftNode.Propose(context.TODO(), []byte(fmt.Sprintf("value %d", i)))
+			log.Printf("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
