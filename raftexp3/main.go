@@ -79,6 +79,14 @@ func (n *node) createWalTables() {
 	}
 }
 
+func (n *node) openWal() {
+	db, err := sql.Open("sqlite3", walPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	n.wal = db
+}
+
 func (n *node) saveWal(st raftpb.HardState, ents []raftpb.Entry) {
 	n.walMu.Lock()
 	defer n.walMu.Unlock()
@@ -151,11 +159,7 @@ func main() {
 		os.Remove(walPath)
 	}
 
-	db, err := sql.Open("sqlite3", walPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	n.wal = db
+	n.openWal()
 	defer n.wal.Close()
 
 	n.createWalTables()
